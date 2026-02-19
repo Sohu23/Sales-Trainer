@@ -40,9 +40,7 @@ export async function POST(
     },
   });
 
-  // Determine level (stored in notes: level:1..3)
-  const levelMatch = (run.notes || "").match(/level:(\d+)/);
-  const level = Math.max(1, Math.min(3, Number(levelMatch?.[1] || 1)));
+  const level = Math.max(1, Math.min(3, run.level || 1));
 
   const system = buildCustomerSystemPrompt({
     scenarioTitle: run.scenario.title,

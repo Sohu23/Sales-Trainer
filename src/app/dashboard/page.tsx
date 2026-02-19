@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppNav } from "@/components/Nav";
 import { prisma } from "@/lib/prisma";
 import { mockProgress, mockRuns } from "@/lib/mockData";
+import { auth } from "@clerk/nextjs/server";
 
 type Scenario = {
   id: string;
@@ -27,6 +28,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default async function DashboardPage() {
   // Protected by Clerk middleware
+  await auth();
 
   const { callsCompleted, avgRating, trainingHours, conversionLiftPct } =
     mockProgress;
@@ -66,7 +68,10 @@ export default async function DashboardPage() {
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Calls abgeschlossen" value={String(callsCompleted)} />
           <StatCard title="Ø Rating" value={`${avgRating.toFixed(1)}/5`} />
-          <StatCard title="Training (Stunden)" value={trainingHours.toFixed(1)} />
+          <StatCard
+            title="Training (Stunden)"
+            value={trainingHours.toFixed(1)}
+          />
           <StatCard title="Conversion Lift" value={`${conversionLiftPct}%`} />
         </div>
 
@@ -129,7 +134,9 @@ export default async function DashboardPage() {
 
           {scenarios.length === 0 && (
             <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200">
-              Noch keine Szenarien in der Datenbank. Führe einmal <code className="rounded bg-black/30 px-1 py-0.5">npm run db:seed</code> aus.
+              Noch keine Szenarien in der Datenbank. Führe einmal{" "}
+              <code className="rounded bg-black/30 px-1 py-0.5">npm run db:seed</code>
+              {" "}aus.
             </div>
           )}
         </section>
@@ -150,7 +157,9 @@ export default async function DashboardPage() {
                   key={r.id}
                   className="grid grid-cols-12 border-t border-white/10 px-4 py-3 text-sm"
                 >
-                  <div className="col-span-5 font-medium">{sc?.title ?? r.scenarioId}</div>
+                  <div className="col-span-5 font-medium">
+                    {sc?.title ?? r.scenarioId}
+                  </div>
                   <div className="col-span-3 text-slate-200">{r.result}</div>
                   <div className="col-span-2 text-slate-200">{r.rating}/5</div>
                   <div className="col-span-2 text-slate-400">

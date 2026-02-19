@@ -29,8 +29,8 @@ export async function GET(req: Request) {
     data: {
       userId,
       scenarioId,
+      level,
       status: SimulationStatus.inProgress,
-      notes: `level:${level}`,
     },
     select: { id: true },
   });

@@ -59,6 +59,8 @@ model SimulationRun {
   userId     String
   scenarioId String
 
+  level Int @default(1)
+
   startedAt DateTime         @default(now())
   endedAt   DateTime?
   status    SimulationStatus @default(inProgress)
@@ -66,7 +68,11 @@ model SimulationRun {
   /// Optional: overall summary rating (can be computed from rubric later)
   overallRating Int?
 
-  /// Freeform notes; currently used to store MVP metadata (e.g. level)
+  /// Whether the run met success criteria (derived from rubric)
+  passed      Boolean   @default(false)
+  evaluatedAt DateTime?
+
+  /// Freeform notes
   notes String?
 
   user     AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -75,7 +81,8 @@ model SimulationRun {
   skills   SkillScore[]
   messages RunMessage[]
 
-  @@index([userId, startedAt])
+  @@index([userId, level, startedAt])
+  @@index([userId, passed, startedAt])
   @@index([scenarioId, startedAt])
 }
 
