@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-700 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
@@ -9,7 +13,15 @@ export default function LoginPage() {
           <p className="text-gray-600">Willkommen zurück!</p>
         </div>
 
-        <form className="space-y-6">
+        <form
+          className="space-y-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            // Mock auth cookie for now. Replace with real auth provider later.
+            document.cookie = "st_logged_in=1; path=/; samesite=lax";
+            router.push("/dashboard");
+          }}
+        >
           <div>
             <label
               htmlFor="email"
@@ -44,8 +56,12 @@ export default function LoginPage() {
             type="submit"
             className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition"
           >
-            Anmelden
+            Anmelden (Mock)
           </button>
+
+          <p className="text-xs text-gray-500">
+            Hinweis: Das ist aktuell ein Mock-Login. Echtes Usermanagement folgt.
+          </p>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
