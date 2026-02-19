@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { AppNav } from "@/components/Nav";
-import { mockProgress, mockRuns, mockScenarios } from "@/lib/mockData";
+import { prisma } from "@/lib/prisma";
+import { mockProgress, mockRuns } from "@/lib/mockData";
+
+type Scenario = {
+  id: string;
+  title: string;
+  persona: string;
+  difficulty: string;
+  durationMin: number;
+  goal: string;
+};
 
 function StatCard({ title, value }: { title: string; value: string }) {
   return (
@@ -15,11 +25,23 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-lg font-semibold text-white">{children}</h2>;
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
   // Protected by Clerk middleware
 
   const { callsCompleted, avgRating, trainingHours, conversionLiftPct } =
     mockProgress;
+
+  const scenarios: Scenario[] = (await prisma.scenario.findMany({
+    orderBy: [{ difficulty: "asc" }, { title: "asc" }],
+    select: {
+      id: true,
+      title: true,
+      persona: true,
+      difficulty: true,
+      durationMin: true,
+      goal: true,
+    },
+  })) as unknown as Scenario[];
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -73,11 +95,11 @@ export default function DashboardPage() {
         <section id="start" className="mt-10">
           <SectionTitle>Neue Outbound Call Simulation</SectionTitle>
           <p className="mt-1 text-sm text-slate-300">
-            Wähle ein Szenario (Mock). Voice-Realtime kommt als nächster Schritt.
+            Wähle ein Szenario. Voice-Realtime kommt als nächster Schritt.
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
-            {mockScenarios.map((sc) => (
+            {scenarios.map((sc) => (
               <div
                 key={sc.id}
                 className="rounded-xl border border-white/10 bg-white/5 p-4"
@@ -104,6 +126,12 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+
+          {scenarios.length === 0 && (
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200">
+              Noch keine Szenarien in der Datenbank. Führe einmal <code className="rounded bg-black/30 px-1 py-0.5">npm run db:seed</code> aus.
+            </div>
+          )}
         </section>
 
         <section className="mt-10">
@@ -116,7 +144,7 @@ export default function DashboardPage() {
               <div className="col-span-2">Zeit</div>
             </div>
             {mockRuns.map((r) => {
-              const sc = mockScenarios.find((s) => s.id === r.scenarioId);
+              const sc = scenarios.find((s) => s.id === r.scenarioId);
               return (
                 <div
                   key={r.id}
