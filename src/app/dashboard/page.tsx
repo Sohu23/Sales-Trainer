@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppNav } from "@/components/Nav";
 import { prisma } from "@/lib/prisma";
-import { mockProgress, mockRuns } from "@/lib/mockData";
+import { mockProgress } from "@/lib/mockData";
 import { auth } from "@clerk/nextjs/server";
 
 type Scenario = {
@@ -28,7 +28,11 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default async function DashboardPage() {
   // Protected by Clerk middleware
-  await auth();
+  const { userId } = await auth();
+  if (!userId) {
+    // Should be handled by middleware, but keep it explicit.
+    throw new Error("Not authenticated");
+  }
 
   const { callsCompleted, avgRating, trainingHours, conversionLiftPct } =
     mockProgress;
@@ -44,6 +48,21 @@ export default async function DashboardPage() {
       goal: true,
     },
   })) as unknown as Scenario[];
+
+  const recentRuns = await prisma.simulationRun.findMany({
+    where: { userId },
+    orderBy: { startedAt: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      level: true,
+      passed: true,
+      evaluatedAt: true,
+      overallRating: true,
+      startedAt: true,
+      scenario: { select: { title: true } },
+    },
+  });
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -146,35 +165,49 @@ export default async function DashboardPage() {
           <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
             <div className="grid grid-cols-12 bg-white/5 px-4 py-3 text-xs text-slate-300">
               <div className="col-span-5">Szenario</div>
-              <div className="col-span-3">Ergebnis</div>
-              <div className="col-span-2">Rating</div>
+              <div className="col-span-2">Level</div>
+              <div className="col-span-2">Status</div>
+              <div className="col-span-1">Score</div>
               <div className="col-span-2">Zeit</div>
             </div>
-            {mockRuns.map((r) => {
-              const sc = scenarios.find((s) => s.id === r.scenarioId);
-              return (
-                <div
-                  key={r.id}
-                  className="grid grid-cols-12 border-t border-white/10 px-4 py-3 text-sm"
-                >
-                  <div className="col-span-5 font-medium">
-                    {sc?.title ?? r.scenarioId}
-                  </div>
-                  <div className="col-span-3 text-slate-200">{r.result}</div>
-                  <div className="col-span-2 text-slate-200">{r.rating}/5</div>
-                  <div className="col-span-2 text-slate-400">
-                    {new Date(r.startedAt).toLocaleString("de-DE", {
-                      dateStyle: "short",
-                      timeStyle: "short",
-                    })}
-                  </div>
-                  <div className="col-span-12 mt-2 text-xs text-slate-300">
-                    {r.notes}
+            {recentRuns.map((r) => (
+              <div
+                key={r.id}
+                className="grid grid-cols-12 border-t border-white/10 px-4 py-3 text-sm"
+              >
+                <div className="col-span-5">
+                  <div className="font-medium">{r.scenario.title}</div>
+                  <div className="mt-1 text-xs text-slate-300">
+                    <a
+                      className="underline underline-offset-2 hover:text-white"
+                      href={`/simulate/${r.id}/result`}
+                    >
+                      Ergebnis ansehen
+                    </a>
                   </div>
                 </div>
-              );
-            })}
+                <div className="col-span-2 text-slate-200">{r.level}</div>
+                <div className="col-span-2 text-slate-200">
+                  {r.passed ? "✅ Pass" : r.evaluatedAt ? "❌ Fail" : "…"}
+                </div>
+                <div className="col-span-1 text-slate-200">
+                  {r.overallRating ? `${r.overallRating}/5` : "–"}
+                </div>
+                <div className="col-span-2 text-slate-400">
+                  {new Date(r.startedAt).toLocaleString("de-DE", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
+
+          {recentRuns.length === 0 && (
+            <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200">
+              Noch keine Simulationen. Starte oben ein Szenario.
+            </div>
+          )}
         </section>
       </main>
     </div>
