@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/demo?scenario=${encodeURIComponent(sc.id)}`}
+                  href={`/simulate/start?scenarioId=${encodeURIComponent(sc.id)}&level=1`}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/15"
                 >
                   Starten

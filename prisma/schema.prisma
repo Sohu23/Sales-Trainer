@@ -9,6 +9,7 @@ datasource db {
 }
 
 enum SimulationStatus {
+  inProgress
   completed
   abandoned
 }
@@ -60,20 +61,34 @@ model SimulationRun {
 
   startedAt DateTime         @default(now())
   endedAt   DateTime?
-  status    SimulationStatus @default(completed)
+  status    SimulationStatus @default(inProgress)
 
   /// Optional: overall summary rating (can be computed from rubric later)
   overallRating Int?
 
+  /// Freeform notes; currently used to store MVP metadata (e.g. level)
   notes String?
 
   user     AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
   scenario Scenario     @relation(fields: [scenarioId], references: [id], onDelete: Restrict)
   rubric   RunRubric?
   skills   SkillScore[]
+  messages RunMessage[]
 
   @@index([userId, startedAt])
   @@index([scenarioId, startedAt])
+}
+
+model RunMessage {
+  id        String   @id @default(cuid())
+  runId     String
+  role      String
+  text      String
+  createdAt DateTime @default(now())
+
+  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId, createdAt])
 }
 
 model RunRubric {
