@@ -29,7 +29,9 @@ export async function POST(
   if (!run) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const transcript = run.messages
-    .map((m) => `${m.role === "bot" ? "Kunde" : "Vertrieb"}: ${m.text}`)
+    .map((m: { role: string; text: string }) =>
+      `${m.role === "bot" ? "Kunde" : "Vertrieb"}: ${m.text}`
+    )
     .join("\n");
 
   const system = `Du bist ein Sales-Coach und bewertest ein Outbound-Rollenspiel.\n\nBewerte NUR anhand des Transkripts und gib ein JSON-Objekt zurück.\n\nRubrik (1-5): pitch, discovery, objections, closing, tone\nZusätzlich: strengths (array), improvements (array), summary (string), nextFocus (string).\n\nGib ausschließlich gültiges JSON zurück, ohne Markdown.`;
