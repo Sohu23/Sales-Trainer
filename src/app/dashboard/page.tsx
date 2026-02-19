@@ -100,15 +100,12 @@ export default async function DashboardPage() {
                     <span className="text-slate-400">Dauer:</span> {sc.durationMin} min
                   </div>
                 </div>
-                <button
-                  className="mt-4 w-full rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/15"
-                  // TODO: wire to real simulation start
-                  onClick={() => {
-                    alert("Simulation (Mock) gestartet – hier kommt später Voice.");
-                  }}
+                <Link
+                  href={`/demo?scenario=${encodeURIComponent(sc.id)}`}
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold hover:bg-white/15"
                 >
                   Starten
-                </button>
+                </Link>
               </div>
             ))}
           </div>
