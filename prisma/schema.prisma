@@ -1,0 +1,137 @@
+// Prisma schema for Sales Trainer
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SimulationStatus {
+  completed
+  abandoned
+}
+
+enum Difficulty {
+  Easy
+  Medium
+  Hard
+}
+
+enum ResourceCategory {
+  ColdCalling
+  Discovery
+  Einwandbehandlung
+  Closing
+  Mindset
+}
+
+model AppUser {
+  /// Clerk userId
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  simulationRuns SimulationRun[]
+  skillScores    SkillScore[]
+}
+
+model Scenario {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  persona     String
+  difficulty  Difficulty
+  durationMin Int
+  goal        String
+  industry    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs SimulationRun[]
+}
+
+model SimulationRun {
+  id         String @id @default(cuid())
+  userId     String
+  scenarioId String
+
+  startedAt DateTime         @default(now())
+  endedAt   DateTime?
+  status    SimulationStatus @default(completed)
+
+  /// Optional: overall summary rating (can be computed from rubric later)
+  overallRating Int?
+
+  notes String?
+
+  user     AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenario Scenario     @relation(fields: [scenarioId], references: [id], onDelete: Restrict)
+  rubric   RunRubric?
+  skills   SkillScore[]
+
+  @@index([userId, startedAt])
+  @@index([scenarioId, startedAt])
+}
+
+model RunRubric {
+  id    String @id @default(cuid())
+  runId String @unique
+
+  /// 1-5 ratings
+  pitch      Int
+  discovery  Int
+  objections Int
+  closing    Int
+  tone       Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  run SimulationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scores SkillScore[]
+}
+
+model SkillScore {
+  id      String  @id @default(cuid())
+  userId  String
+  skillId String
+  runId   String?
+
+  /// 0-100 normalized score
+  score Int
+
+  createdAt DateTime @default(now())
+
+  user  AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill          @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  run   SimulationRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([skillId, createdAt])
+}
+
+model ResourceTip {
+  id       String           @id @default(cuid())
+  category ResourceCategory
+  title    String
+  body     String
+  takeaway String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
