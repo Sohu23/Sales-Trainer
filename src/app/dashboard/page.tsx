@@ -1,9 +1,6 @@
-import { cookies } from "next/headers";
 import Link from "next/link";
 import { AppNav } from "@/components/Nav";
-// Auth handled via cookie check (mock, replace later)
 import { mockProgress, mockRuns, mockScenarios } from "@/lib/mockData";
-import { redirect } from "next/navigation";
 
 function StatCard({ title, value }: { title: string; value: string }) {
   return (
@@ -18,10 +15,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-lg font-semibold text-white">{children}</h2>;
 }
 
-export default async function DashboardPage() {
-  const jar = await cookies();
-  const authed = jar.get("st_logged_in")?.value === "1";
-  if (!authed) redirect("/login");
+export default function DashboardPage() {
+  // Protected by Clerk middleware
 
   const { callsCompleted, avgRating, trainingHours, conversionLiftPct } =
     mockProgress;

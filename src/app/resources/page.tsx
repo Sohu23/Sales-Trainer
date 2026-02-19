@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+// auth via Clerk middleware
 import { AppNav } from "@/components/Nav";
 // Auth handled via cookie check (mock, replace later)
 import { mockTips, SalesTip } from "@/lib/mockData";
@@ -18,14 +17,12 @@ function TipCard({ tip }: { tip: SalesTip }) {
   );
 }
 
-export default async function ResourcesPage({
+export default function ResourcesPage({
   searchParams,
 }: {
   searchParams?: { q?: string; cat?: string };
 }) {
-  const jar = await cookies();
-  const authed = jar.get("st_logged_in")?.value === "1";
-  if (!authed) redirect("/login");
+// Protected by Clerk middleware
 
   const q = (searchParams?.q ?? "").toLowerCase().trim();
   const cat = (searchParams?.cat ?? "").trim();

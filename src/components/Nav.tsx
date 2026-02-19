@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
 
 type NavItem = {
   href: string;
@@ -27,12 +28,9 @@ export function AppNav() {
               {it.label}
             </Link>
           ))}
-          <Link
-            href="/login"
-            className="rounded-md bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
-          >
-            Abmelden
-          </Link>
+          <div className="ml-2">
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </nav>
       </div>
     </header>
