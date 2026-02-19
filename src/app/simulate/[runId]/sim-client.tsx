@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Msg = {
   id: string;
@@ -16,6 +17,7 @@ export default function SimClient({
   runId: string;
   initialMessages: Msg[];
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>(initialMessages);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -110,6 +112,8 @@ export default function SimClient({
           createdAt: new Date().toISOString(),
         },
       ]);
+
+      router.push(`/simulate/${runId}/result`);
     } catch {
       setMessages((m) => [
         ...m,

@@ -72,11 +72,22 @@ export async function POST(
     create: { runId, pitch, discovery, objections, closing, tone },
   });
 
+  const avg = (pitch + discovery + objections + closing + tone) / 5;
+  const overallRating = clamp15(avg);
+
   await prisma.simulationRun.update({
     where: { id: runId },
     data: {
       evaluatedAt: new Date(),
       passed,
+      overallRating,
+      // Store feedback in notes as JSON (MVP). Later we can normalize this.
+      notes: JSON.stringify({
+        summary: typeof obj.summary === "string" ? obj.summary : "",
+        nextFocus: typeof obj.nextFocus === "string" ? obj.nextFocus : "",
+        strengths: Array.isArray(obj.strengths) ? obj.strengths : [],
+        improvements: Array.isArray(obj.improvements) ? obj.improvements : [],
+      }),
     },
   });
 
