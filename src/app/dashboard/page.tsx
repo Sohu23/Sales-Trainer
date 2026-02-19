@@ -50,8 +50,9 @@ export default async function DashboardPage() {
   })) as unknown as Scenario[];
 
   const recentRuns = await prisma.simulationRun.findMany({
-    where: { userId },
-    orderBy: { startedAt: "desc" },
+    // Only show completed/evaluated runs
+    where: { userId, evaluatedAt: { not: null } },
+    orderBy: { evaluatedAt: "desc" },
     take: 10,
     select: {
       id: true,
