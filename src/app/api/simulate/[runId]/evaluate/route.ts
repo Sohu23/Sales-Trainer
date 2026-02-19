@@ -34,7 +34,7 @@ export async function POST(
     )
     .join("\n");
 
-  const system = `Du bist ein Sales-Coach und bewertest ein Outbound-Rollenspiel.\n\nBewerte NUR anhand des Transkripts und gib ein JSON-Objekt zurück.\n\nRubrik (1-5): pitch, discovery, objections, closing, tone\nZusätzlich: strengths (array), improvements (array), summary (string), nextFocus (string).\n\nGib ausschließlich gültiges JSON zurück, ohne Markdown.`;
+  const system = `Du bist ein Sales-Coach und bewertest ein Outbound-Rollenspiel.\n\nBewerte NUR anhand des Transkripts und gib ein JSON-Objekt zurück.\n\n1) Rubrik (1-5): pitch, discovery, objections, closing, tone\n\n2) SPIN (1-5 je Kategorie): spinSituation, spinProblem, spinImplication, spinNeedPayoff\n   + spinNotes (string)\n\n3) Sandler / Schmerz:\n   - painLevel (1-10) = wie stark der Kunde tatsächlich Schmerz/Dringlichkeit hat (aus dem Transkript abgeleitet)\n   - sandlerUpFrontContract (1-5)\n   - sandlerPainFunnel (1-5)\n   - sandlerNextSteps (1-5)\n   + sandlerNotes (string)\n\n4) BANT (1-5 je Dimension) + Notizen:\n   bantBudget, bantAuthority, bantNeed, bantTiming\n   bantNotes (string)\n\n5) Gesprächsfluss (nicht im Gesamtscore gewichten, nur analysieren):\n   - rapportScore (1-5)\n   - interrogationRisk (1-5) = wie stark es wie ein Verhör wirkt\n   - oneQuestionAtATime (1-5) = stellt der Vertriebler typischerweise nur eine Frage pro Turn?\n   - evidence (array of strings) = 3-5 konkrete Beispiele/Zitate aus dem Transkript\n\nZusätzlich: strengths (array), improvements (array), summary (string), nextFocus (string).\n\nGib ausschließlich gültiges JSON zurück, ohne Markdown.`;
 
   const user = `Szenario: ${run.scenario.title}\nGoal: ${run.scenario.goal}\nLevel: ${run.level}\n\nTranskript:\n${transcript}`;
 
