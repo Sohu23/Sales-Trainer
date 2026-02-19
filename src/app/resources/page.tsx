@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppNav } from "@/components/Nav";
-import { isAuthedFromCookie } from "@/lib/auth";
+// Auth handled via cookie check (mock, replace later)
 import { mockTips, SalesTip } from "@/lib/mockData";
 
 function TipCard({ tip }: { tip: SalesTip }) {
@@ -18,12 +18,13 @@ function TipCard({ tip }: { tip: SalesTip }) {
   );
 }
 
-export default function ResourcesPage({
+export default async function ResourcesPage({
   searchParams,
 }: {
   searchParams?: { q?: string; cat?: string };
 }) {
-  const authed = isAuthedFromCookie(cookies().toString());
+  const jar = await cookies();
+  const authed = jar.get("st_logged_in")?.value === "1";
   if (!authed) redirect("/login");
 
   const q = (searchParams?.q ?? "").toLowerCase().trim();

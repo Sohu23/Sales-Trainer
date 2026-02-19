@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { AppNav } from "@/components/Nav";
-import { isAuthedFromCookie } from "@/lib/auth";
+// Auth handled via cookie check (mock, replace later)
 import { mockProgress, mockRuns, mockScenarios } from "@/lib/mockData";
 import { redirect } from "next/navigation";
 
@@ -18,8 +18,9 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-lg font-semibold text-white">{children}</h2>;
 }
 
-export default function DashboardPage() {
-  const authed = isAuthedFromCookie(cookies().toString());
+export default async function DashboardPage() {
+  const jar = await cookies();
+  const authed = jar.get("st_logged_in")?.value === "1";
   if (!authed) redirect("/login");
 
   const { callsCompleted, avgRating, trainingHours, conversionLiftPct } =
