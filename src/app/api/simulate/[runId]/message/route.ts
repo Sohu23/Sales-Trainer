@@ -55,12 +55,27 @@ export async function POST(
     content: m.text,
   }));
 
-  const { content } = await openRouterChat({
-    messages: [{ role: "system", content: system }, ...history, { role: "user", content: text }],
-    temperature: 0.7,
-  });
-
-  const botText = content.trim();
+  let botText = "";
+  try {
+    const { content } = await openRouterChat({
+      messages: [
+        { role: "system", content: system },
+        ...history,
+        { role: "user", content: text },
+      ],
+      temperature: 0.7,
+    });
+    botText = content.trim();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "unknown_error";
+    return NextResponse.json(
+      {
+        error: "openrouter_failed",
+        detail: msg.slice(0, 500),
+      },
+      { status: 502 }
+    );
+  }
 
   await prisma.runMessage.create({
     data: {

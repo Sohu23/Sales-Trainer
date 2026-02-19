@@ -10,6 +10,28 @@ type Msg = {
   createdAt: string;
 };
 
+type MessageResponse = {
+  reply?: string;
+  detail?: string;
+  error?: string;
+};
+
+type EvaluateResponse = {
+  passed?: boolean;
+  rubric?: {
+    pitch: number;
+    discovery: number;
+    objections: number;
+    closing: number;
+    tone: number;
+  };
+  feedback?: {
+    summary?: string;
+    nextFocus?: string;
+  };
+  error?: string;
+};
+
 export default function SimClient({
   runId,
   initialMessages,
@@ -20,18 +42,36 @@ export default function SimClient({
   const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>(initialMessages);
   const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busySend, setBusySend] = useState(false);
+  const [busyEval, setBusyEval] = useState(false);
+  const busy = busySend || busyEval;
 
   const sorted = useMemo(
     () => [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [messages]
   );
 
+  async function fetchJson<T>(
+    input: RequestInfo,
+    init: RequestInit & { timeoutMs?: number } = {}
+  ): Promise<{ res: Response; data: T }> {
+    const { timeoutMs = 20000, ...rest } = init;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(input, { ...rest, signal: controller.signal });
+      const data = (await res.json().catch(() => ({}))) as T;
+      return { res, data };
+    } finally {
+      clearTimeout(id);
+    }
+  }
+
   async function send() {
     const t = text.trim();
-    if (!t || busy) return;
+    if (!t || busySend || busyEval) return;
 
-    setBusy(true);
+    setBusySend(true);
 
     const optimistic: Msg = {
       id: `tmp-${Date.now()}`,
@@ -44,15 +84,15 @@ export default function SimClient({
     setText("");
 
     try {
-      const res = await fetch(`/api/simulate/${runId}/message`, {
+      const { res, data } = await fetchJson<MessageResponse>(`/api/simulate/${runId}/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: t }),
+        timeoutMs: 30000,
       });
-      const data = (await res.json()) as { reply?: string; error?: string };
 
       if (!res.ok || !data.reply) {
-        throw new Error(data.error || `HTTP ${res.status}`);
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
       }
 
       const bot: Msg = {
@@ -74,19 +114,21 @@ export default function SimClient({
         },
       ]);
     } finally {
-      setBusy(false);
+      setBusySend(false);
     }
   }
 
   async function finishAndEvaluate() {
-    if (busy) return;
-    setBusy(true);
+    if (busyEval || busySend) return;
+    setBusyEval(true);
     try {
       // Finish
-      await fetch(`/api/simulate/${runId}/finish`, { method: "POST" });
+      await fetchJson<unknown>(`/api/simulate/${runId}/finish`, { method: "POST", timeoutMs: 20000 });
       // Evaluate
-      const res = await fetch(`/api/simulate/${runId}/evaluate`, { method: "POST" });
-      const data = await res.json();
+      const { res, data } = await fetchJson<EvaluateResponse>(`/api/simulate/${runId}/evaluate`, {
+        method: "POST",
+        timeoutMs: 60000,
+      });
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 
       const rubric = data?.rubric;
@@ -125,7 +167,7 @@ export default function SimClient({
         },
       ]);
     } finally {
-      setBusy(false);
+      setBusyEval(false);
     }
   }
 

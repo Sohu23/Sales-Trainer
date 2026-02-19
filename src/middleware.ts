@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -18,7 +19,7 @@ export default clerkMiddleware((auth, req) => {
         // Middleware will handle redirect to sign-in based on Clerk config.
         // Throwing is not necessary here; returning a redirect keeps it explicit.
         const url = new URL("/login", req.url);
-        return Response.redirect(url);
+        return NextResponse.redirect(url);
       }
       return undefined;
     });
