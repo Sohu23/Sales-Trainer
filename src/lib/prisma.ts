@@ -8,7 +8,11 @@ const connectionString =
   process.env.POSTGRES_PRISMA_URL;
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
+  // This module is used on the server only.
+  // In development you may not have env vars loaded. Fail with a clear error.
+  throw new Error(
+    "DATABASE_URL is not set (expected pooled Neon URL for runtime)."
+  );
 }
 
 // Neon docs recommend passing the connection string directly to the adapter.

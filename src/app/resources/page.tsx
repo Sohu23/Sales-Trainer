@@ -1,12 +1,27 @@
 // auth via Clerk middleware
 import { AppNav } from "@/components/Nav";
-// Auth handled via cookie check (mock, replace later)
-import { mockTips, SalesTip } from "@/lib/mockData";
+import { prisma } from "@/lib/prisma";
 
-function TipCard({ tip }: { tip: SalesTip }) {
+type Tip = {
+  id: string;
+  category: string;
+  title: string;
+  body: string;
+  takeaway: string;
+};
+
+const categoryLabel: Record<string, string> = {
+  ColdCalling: "Cold Calling",
+  Discovery: "Discovery",
+  Einwandbehandlung: "Einwandbehandlung",
+  Closing: "Closing",
+  Mindset: "Mindset",
+};
+
+function TipCard({ tip }: { tip: Tip }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="text-xs text-slate-300">{tip.category}</div>
+      <div className="text-xs text-slate-300">{categoryLabel[tip.category] ?? tip.category}</div>
       <div className="mt-1 text-base font-semibold text-white">{tip.title}</div>
       <p className="mt-2 text-sm text-slate-200">{tip.body}</p>
       <div className="mt-3 rounded-lg bg-white/5 p-3 text-sm">
@@ -17,27 +32,39 @@ function TipCard({ tip }: { tip: SalesTip }) {
   );
 }
 
-export default function ResourcesPage({
+export default async function ResourcesPage({
   searchParams,
 }: {
   searchParams?: { q?: string; cat?: string };
 }) {
-// Protected by Clerk middleware
+  // Protected by Clerk middleware
 
   const q = (searchParams?.q ?? "").toLowerCase().trim();
   const cat = (searchParams?.cat ?? "").trim();
 
-  const categories = Array.from(new Set(mockTips.map((t) => t.category))).sort();
-
-  const filtered = mockTips.filter((t) => {
-    const matchesQ =
-      !q ||
-      t.title.toLowerCase().includes(q) ||
-      t.body.toLowerCase().includes(q) ||
-      t.takeaway.toLowerCase().includes(q);
-    const matchesCat = !cat || t.category === cat;
-    return matchesQ && matchesCat;
+  const tips = await prisma.resourceTip.findMany({
+    orderBy: [{ category: "asc" }, { title: "asc" }],
   });
+
+  const categories = Array.from(new Set(tips.map((t) => t.category))).sort();
+
+  const filtered = tips
+    .map((t) => ({
+      id: t.id,
+      category: t.category,
+      title: t.title,
+      body: t.body,
+      takeaway: t.takeaway,
+    }))
+    .filter((t) => {
+      const matchesQ =
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        t.body.toLowerCase().includes(q) ||
+        t.takeaway.toLowerCase().includes(q);
+      const matchesCat = !cat || t.category === cat;
+      return matchesQ && matchesCat;
+    });
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
